@@ -231,6 +231,37 @@ class WumpusWorld:
         state = np.array(state, dtype=np.int32).reshape(1,4)
 
         return state
+    
+    def evaluate(self):
+        current_pos_agent = self.get_pos_agent()
+        for piece in self.board.components.values():
+            if piece.code == 'G':
+                if piece.pos == current_pos_agent:
+                    return 10
+            elif piece.code == 'W':
+                if piece.pos == current_pos_agent:
+                    return -10
+            elif piece.code == 'P':
+                if piece.pos == current_pos_agent:
+                    return -10
+        return -1
+    
+    def is_done(self):
+        current_pos_agent = self.get_pos_agent()
+        for piece in self.board.components.values():
+            if piece.code == 'G':
+                if piece.pos == current_pos_agent:
+                    return True
+            elif piece.code == 'W':
+                if piece.pos == current_pos_agent:
+                    return True
+            elif piece.code == 'P':
+                if piece.pos == current_pos_agent:
+                    return True
+        return False
+
+    def get_pos_agent(self):
+        return self.board.components['Agent'].pos        
 
 
 if __name__ == '__main__':
