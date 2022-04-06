@@ -1,10 +1,37 @@
 import numpy as np
 
 class BoardPiece:
-    def __init__(self, name, code, pos) -> None:
+    def __init__(self, name, code, pos, direction='E') -> None:
         self.name = name        #name of the piece
         self.code = code        #An ASCII character to display on the board
         self.pos = pos          #2-tuple e.g. (1,4)
+        self.direction = direction    #N-North, S-South, E-East, W-West
+    
+    def turn_left(self):
+        if self.direction == 'N':
+            self.direction = 'W'
+        elif self.direction == 'S':
+            self.direction = 'E'
+        elif self.direction == 'E':
+            self.direction = 'N'
+        elif self.direction == 'W':
+            self.direction = 'S'
+    
+    def turn_right(self):
+        if self.direction == 'N':
+            self.direction = 'E'
+        elif self.direction == 'S':
+            self.direction = 'W'
+        elif self.direction == 'E':
+            self.direction = 'S'
+        elif self.direction == 'W':
+            self.direction = 'N'
+    
+    def grab(self):
+        pass
+    
+    def shoot(self):
+        pass
 
 class WumpusBoard:
     def __init__(self, size_env):
@@ -103,7 +130,7 @@ class WumpusBoard:
 class WumpusWorld:
     def __init__(self, size) -> None:
         self.board = WumpusBoard(size)
-        self.board.add_Piece('Agent', 'A', (0,0))
+        self.board.add_Piece('Agent', 'A', (0,0), 'E')
         self.generation_environment()
     
     def generation_environment(self):
@@ -195,18 +222,34 @@ class WumpusWorld:
         piece = self.board.components['Agent']
         piece.pos = (0,0)
     
-    def move(self, action):
+    def verify_direction(self):
+        direction = self.board.components['Agent'].direction
         row, col = self.board.components['Agent'].pos
-        if action == 'UP':
+        if direction == 'N':
             row = min(row+1, self.board.size_env-1)
-        elif action == 'DOWN':
+        elif direction == 'S':
             row = max(row-1, 0)
-        elif action == 'LEFT':
-            col = max(col-1, 0)
-        elif action == 'RIGHT':
+        elif direction == 'E':
             col = min(col+1, self.board.size_env-1)
-        
+        elif direction == 'W':
+            col = max(col-1, 0)
+
         self.board.components['Agent'].pos = (row, col)
+
+    def move(self, action):
+        #FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT
+        if action == 'FORWARD':
+            self.verify_direction()
+        elif action == 'TURN_LEFT':
+            self.board.components['Agent'].turn_left()
+        elif action == 'TURN_RIGHT':
+            self.board.components['Agent'].turn_right()
+        elif action == 'GRAB':
+            self.board.components['Agent'].grab()
+        elif action == 'SHOOT':
+            self.board.components['Agent'].shoot()
+        
+        
     
     def convert_sensations_in_matrix(self):
         #0 - Breeze 1-Stench 3-Glitter
