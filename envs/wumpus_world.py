@@ -5,7 +5,13 @@ class BoardPiece:
         self.name = name        #name of the piece
         self.code = code        #An ASCII character to display on the board
         self.pos = pos          #2-tuple e.g. (1,4)
+
+class PieceAgent(BoardPiece):
+    def __init__(self, name, code, pos, direction='E') -> None:
+        super().__init__(name, code, pos)
         self.direction = direction    #N-North, S-South, E-East, W-West
+        self.has_gold = False
+        self.wumpus_alive = True
     
     def turn_left(self):
         if self.direction == 'N':
@@ -27,11 +33,13 @@ class BoardPiece:
         elif self.direction == 'W':
             self.direction = 'N'
     
-    def grab(self):
-        pass
+    def grab(self, pos_gold):
+        if self.pos == pos_gold:
+            self.has_gold = True
     
-    def shoot(self):
-        pass
+    def shoot(self, pos_wumpus):
+        if self.pos == pos_wumpus:
+            self.wumpus_alive = False
 
 class WumpusBoard:
     def __init__(self, size_env):
@@ -245,9 +253,11 @@ class WumpusWorld:
         elif action == 'TURN_RIGHT':
             self.board.components['Agent'].turn_right()
         elif action == 'GRAB':
-            self.board.components['Agent'].grab()
+            pos_gold = self.board.components['gold'].pos
+            self.board.components['Agent'].grab(pos_gold)
         elif action == 'SHOOT':
-            self.board.components['Agent'].shoot()
+            pos_wumpus = self.board.components['wumpus'].pos
+            self.board.components['Agent'].shoot(pos_wumpus)
         
         
     

@@ -6,7 +6,7 @@ from wumpus_world import WumpusWorld
 class CustomEnv(gym.Env):
     def __init__(self, nrow, ncol):
         self.environment = WumpusWorld(nrow)
-        self.action_space = spaces.Discrete(6)
+        self.action_space = spaces.Discrete(5)  # 5 actions: FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT
         self.observation_space = spaces.Discrete(nrow*ncol)
     
     def reset(self):
