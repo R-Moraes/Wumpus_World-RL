@@ -13,6 +13,7 @@ class CustomEnv(gym.Env):
         self.environment.reset_environment()
 
     def step(self, action):
+        print(action)
         self.environment.move(action)
         state = self.environment.observe()
         reward = self.environment.evaluate()
