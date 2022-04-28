@@ -234,6 +234,7 @@ class WumpusWorld:
     def reset_environment(self):
         piece = self.board.components['Agent']
         piece.pos = (0,0)
+        return self.observe()
     
     def verify_direction(self):
         direction = self.board.components['Agent'].direction
@@ -287,7 +288,7 @@ class WumpusWorld:
         state_env = [current_row * self.board.size_env + current_col]
         state_sensations = self.convert_sensations_in_matrix()
         state = state_env + state_sensations
-        state = np.array(state, dtype=np.int32).reshape(1,4)
+        state = np.array(state)
 
         return state
     

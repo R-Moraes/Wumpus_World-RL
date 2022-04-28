@@ -7,10 +7,11 @@ class CustomEnv(gym.Env):
     def __init__(self, nrow, ncol):
         self.environment = WumpusWorld(nrow)
         self.action_space = spaces.Discrete(5)  # 5 actions: FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT
-        self.observation_space = spaces.Discrete(nrow*ncol)
+        self.observation_space = spaces.Discrete(4)
     
     def reset(self):
-        self.environment.reset_environment()
+        initial_state = self.environment.reset_environment()
+        return initial_state
 
     def step(self, action):
         print(action)
