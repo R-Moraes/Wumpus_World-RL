@@ -234,6 +234,11 @@ class WumpusWorld:
     def reset_environment(self):
         piece = self.board.components['Agent']
         piece.pos = (0,0)
+        piece.direction = 'E'
+        piece.has_gold = False
+        piece.wumpus_alive = True
+        piece.last_action = None
+        piece.amount_arrows = 1
         return self.observe()
     
     def verify_direction(self):
@@ -265,8 +270,7 @@ class WumpusWorld:
         elif action == 'SHOOT':
             pos_wumpus = self.board.components['Wumpus'].pos
             self.board.components['Agent'].shoot(pos_wumpus)
-        
-        
+            self.board.components['Agent'].amount_arrows -= 1
     
     def convert_sensations_in_matrix(self):
         #0 - Breeze 1-Stench 3-Glitter
@@ -284,10 +288,14 @@ class WumpusWorld:
         return state_sensations
     
     def observe(self):
+        # print(self.board.components['Agent'].pos)
         current_row, current_col = self.board.components['Agent'].pos
+        amount_arrow = self.board.components['Agent'].amount_arrows
+        wumpus_alive = self.board.components['Agent'].wumpus_alive
         state_env = [current_row * self.board.size_env + current_col]
         state_sensations = self.convert_sensations_in_matrix()
-        state = state_env + state_sensations
+        information_for_agent = [amount_arrow, wumpus_alive]
+        state = state_env + state_sensations + information_for_agent
         state = np.array(state)
 
         return state
