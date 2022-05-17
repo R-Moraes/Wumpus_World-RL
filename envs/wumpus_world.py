@@ -7,13 +7,14 @@ class BoardPiece:
         self.pos = pos          #2-tuple e.g. (1,4)
 
 class PieceAgent(BoardPiece):
-    def __init__(self, name, code, pos, direction='E') -> None:
+    def __init__(self, name, code, pos, max_steps, direction='E') -> None:
         super().__init__(name, code, pos)
         self.direction = direction    #N-North, S-South, E-East, W-West
         self.has_gold = False
         self.wumpus_alive = True
         self.last_action = None
         self.amount_arrows = 1
+        self.max_steps = max_steps
     
     def turn_left(self):
         if self.direction == 'N':
@@ -39,9 +40,26 @@ class PieceAgent(BoardPiece):
         if self.pos == pos_gold:
             self.has_gold = True
     
-    def shoot(self, pos_wumpus):
-        if self.pos == pos_wumpus:
+    def shoot(self, pos_wumpus, size_env):
+        next_coord = self.coord_direction_looking(size_env)
+        print(pos_wumpus, next_coord)
+        if next_coord == pos_wumpus:
             self.wumpus_alive = False
+
+    #check coordinate that according to the direction I am looking
+    def coord_direction_looking(self, size_env):
+        direction = self.direction
+        row, col = self.pos
+        if direction == 'N':
+            row = min(row+1, size_env-1)
+        elif direction == 'S':
+            row = max(row-1, 0)
+        elif direction == 'E':
+            col = min(col+1, size_env-1)
+        elif direction == 'W':
+            col = max(col-1, 0)
+
+        return row, col
 
 class WumpusBoard:
     def __init__(self, size_env):
@@ -57,7 +75,7 @@ class WumpusBoard:
     
     def add_Piece(self, name, code, pos, direction=None):
         if code == 'A':
-            new_piece = PieceAgent(name, code, pos, direction)
+            new_piece = PieceAgent(name, code, pos, 100, direction)
         else:
             new_piece = BoardPiece(name, code, pos)
         self.components[name] = new_piece
@@ -256,6 +274,7 @@ class WumpusWorld:
         self.board.components['Agent'].pos = (row, col)
 
     def move(self, action):
+        self.board.components['Agent'].max_steps -= 1
         self.board.components['Agent'].last_action = action
         #FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT
         if action == 'FORWARD':
@@ -269,7 +288,7 @@ class WumpusWorld:
             self.board.components['Agent'].grab(pos_gold)
         elif action == 'SHOOT':
             pos_wumpus = self.board.components['Wumpus'].pos
-            self.board.components['Agent'].shoot(pos_wumpus)
+            self.board.components['Agent'].shoot(pos_wumpus, self.board.size_env)
             self.board.components['Agent'].amount_arrows -= 1
     
     def convert_sensations_in_matrix(self):
@@ -292,7 +311,9 @@ class WumpusWorld:
         current_row, current_col = self.board.components['Agent'].pos
         amount_arrow = self.board.components['Agent'].amount_arrows
         wumpus_alive = self.board.components['Agent'].wumpus_alive
-        state_env = [current_row * self.board.size_env + current_col]
+        dict_directions = {'N':0, 'S':1, 'E':2, 'W':3}
+        direction = self.board.components['Agent'].direction
+        state_env = [current_row * self.board.size_env + current_col, dict_directions[direction]]
         state_sensations = self.convert_sensations_in_matrix()
         information_for_agent = [amount_arrow, wumpus_alive]
         state = state_env + state_sensations + information_for_agent
@@ -303,41 +324,40 @@ class WumpusWorld:
     def evaluate(self):
         current_pos_agent = self.get_pos_agent()
         last_action = self.board.components['Agent'].last_action
-        for piece in self.board.components.values():
-            if piece.code == 'W':
-                if piece.pos == current_pos_agent:
-                    return -10
-            elif piece.code == 'P':
-                if piece.pos == current_pos_agent:
-                    return -10
-            elif last_action == 'GRAB':
-                if piece.pos == current_pos_agent and piece.code == 'G':
-                    return 10
-            elif last_action == 'SHOOT':
-                if self.board.components['Agent'].amount_arrows == 0:
-                    return -1
+        piece_coord = [piece.pos for piece in self.board.components.values() if piece.code == 'P']
+        
+        if self.board.components['Wumpus'].pos == current_pos_agent and self.board.components['Agent'].wumpus_alive:
+                return -100
+        elif current_pos_agent in piece_coord:
+                return -100
+        elif self.board.components['Gold'] == current_pos_agent:
+            if last_action == 'GRAB':
+                return 500
+        elif last_action == 'SHOOT':
+            if self.board.components['Agent'].amount_arrows == 0:
+                return -10
+            else:
+                if self.shoot_wumpus()==self.board.components['Wumpus'].pos and self.board.components['Agent'].wumpus_alive:
+                    self.board.components['Agent'].wumpus_alive = False
+                    self.board.components['Agent'].amount_arrows = 0
+                    return 50
                 else:
-                    if self.shoot_wumpus()==piece.pos and piece.code == 'W':
-                        self.board.components['Agent'].wumpus_alive = False
-                        self.board.components['Agent'].amount_arrows -= 1
-                        return 10
-                    else:
-                        self.board.components['Agent'].amount_arrows -= 1
-                        return -1
+                    self.board.components['Agent'].amount_arrows = 0
         return -1
     
     def is_done(self):
         current_pos_agent = self.get_pos_agent()
-        for piece in self.board.components.values():
-            if piece.code == 'G':
-                if piece.pos == current_pos_agent:
-                    return True
-            elif piece.code == 'W':
-                if piece.pos == current_pos_agent:
-                    return True
-            elif piece.code == 'P':
-                if piece.pos == current_pos_agent:
-                    return True
+        last_action = self.board.components['Agent'].last_action
+        piece_coord = [piece.pos for piece in self.board.components.values() if piece.code == 'P']
+        if self.board.components['Gold'].pos == current_pos_agent and last_action == 'GRAB':
+            return True
+        elif self.board.components['Wumpus'].pos == current_pos_agent:
+            return True
+        elif current_pos_agent in piece_coord:
+            return True
+        elif self.board.components['Agent'].max_steps == 0:
+            return True
+        
         return False
 
     def get_pos_agent(self):
@@ -365,7 +385,8 @@ if __name__ == '__main__':
     mat_sen = env.board.get_matrix_sensations()
     print(env.board.get_board_str(mat))
     print(env.observe())
-    env.reset_environment()
+    env.move('SHOOT')
+    
 
 
 

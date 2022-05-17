@@ -8,7 +8,7 @@ class CustomEnv(gym.Env):
     def __init__(self, nrow, ncol):
         self.environment = WumpusWorld(nrow)
         self.action_space = spaces.Discrete(5)  # 5 actions: FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT
-        self.observation_space = spaces.Discrete(6)  # 6 observations: POSITION_AGENT, BREEZE, STENCH, GLITTER, ARROW, WUMPUS IS ALIVE
+        self.observation_space = spaces.Discrete(7)  # 6 observations: POSITION_AGENT, BREEZE, STENCH, GLITTER, ARROW, WUMPUS IS ALIVE
     
     def reset(self):
         initial_state = self.environment.reset_environment()

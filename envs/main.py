@@ -52,22 +52,23 @@ agent = DQNAgent(state_size, action_size)
 for e in range(n_episodes):
     print('Episode: {}'.format(e))
     state = env.reset()
+    print('Initial state: {}'.format(state))
     state = np.reshape(state, [1, state_size])
-
+    env.render()
     done = False 
     time = 0
     while not done:
         #env.render()
         action = agent.act(state)
+        print('Action: {} || Direction: {}'.format(dict_actions[action], env.environment.board.components['Agent'].direction))
         next_state, reward, done, _ = env.step(dict_actions[action])
-        # print(next_state, reward, done, action)
-        reward = reward if not done else -10
+        print(next_state, reward, done, action)
         next_state = np.reshape(next_state, [1, state_size]) 
         agent.remember(state, action, reward, next_state, done)
         state = next_state
+        time += reward
         if done:
             print("episode: {}/{}, score: {}, e: {:.2}"
                   .format(e, n_episodes-1, time, agent.epsilon))
-        time += reward
     if len(agent.memory) > batch_size:
         agent.train(batch_size)
