@@ -42,7 +42,7 @@ env = CustomEnv(4,4)
 state_size = env.observation_space.n
 action_size = env.action_space.n
 batch_size = 64
-n_episodes = 2000
+n_episodes = 1000
 output_dir = 'model_output/wumpus/'
 if not os.path.exists(output_dir):
   os.makedirs(output_dir)
@@ -60,9 +60,12 @@ for e in range(n_episodes):
     while not done:
         #env.render()
         action = agent.act(state)
-        print('Action: {} || Direction: {}'.format(dict_actions[action], env.environment.board.components['Agent'].direction))
+        print('Action: {} || Direction: {} || Last Action: {} || Amount_step: {} '.format(dict_actions[action],
+            env.environment.board.components['Agent'].direction,
+            env.environment.board.components['Agent'].last_action,        
+            env.environment.board.components['Agent'].amount_steps))
         next_state, reward, done, _ = env.step(dict_actions[action])
-        print(next_state, reward, done, action)
+        print(next_state, reward, done, dict_actions[action])
         next_state = np.reshape(next_state, [1, state_size]) 
         agent.remember(state, action, reward, next_state, done)
         state = next_state
@@ -70,5 +73,5 @@ for e in range(n_episodes):
         if done:
             print("episode: {}/{}, score: {}, e: {:.2}"
                   .format(e, n_episodes-1, time, agent.epsilon))
-    if len(agent.memory) > batch_size:
-        agent.train(batch_size)
+        if len(agent.memory) > batch_size:
+            agent.train(batch_size)
