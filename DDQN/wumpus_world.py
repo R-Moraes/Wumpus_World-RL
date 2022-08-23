@@ -94,6 +94,18 @@ class WumpusBoard:
         
         return matrix_str
     
+    def get_board_str_two(self, matrix):
+        matrix_list = []
+        matrix_str = ''
+        for i in range(self.size_env):
+            matrix_str += '|'
+            for j in range(self.size_env):
+                matrix_str += f' {matrix[i,j]} |'
+            # matrix_str +='\n'
+            matrix_list.append(matrix_str)
+            matrix_str = ''
+        return matrix_list
+    
     def coord_is_valid(self, pos:tuple):
         x,y = pos
         if (x < self.size_env and x >= 0) and (y < self.size_env and y >= 0):
@@ -141,9 +153,14 @@ class WumpusBoard:
     def get_matrix_env(self):
         matrix_env = np.zeros((self.size_env, self.size_env), dtype='<U2')
         matrix_env[:] = 'E'
+        agent_pos = self.components['Agent'].pos
 
         for name, piece in self.components.items():
-            matrix_env[piece.pos] = piece.code
+            if agent_pos == piece.pos:
+                '''AGENTE ESTA NA CASA EM QUE HA OURO, WUMPUS OU POÇO'''
+                matrix_env[piece.pos] = 'A'
+            else:
+                matrix_env[piece.pos] = piece.code
         
         return matrix_env
     
@@ -260,7 +277,7 @@ class WumpusWorld:
         self.board.components['Agent'].amount_arrows = 1
         self.board.components['Agent'].amount_steps = self.board.components['Agent'].max_steps
         self.board.components['Gold'].code = 'G'
-        self.board.components['Wumpus'].code == 'W'
+        self.board.components['Wumpus'].code = 'W'
         return self.observe()
     
     def verify_direction(self):
