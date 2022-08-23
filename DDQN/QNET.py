@@ -30,7 +30,7 @@ class QNET():
             W1 = tfv1.get_variable('W1', shape=(self.in_units, self.hidden_units), initializer=tf.random_normal_initializer())
             W2 = tfv1.get_variable('W2', shape=(self.hidden_units, self.hidden_units), initializer=tf.random_normal_initializer())
             W3 = tfv1.get_variable('W3', shape=(self.hidden_units, self.hidden_units), initializer=tf.random_normal_initializer())
-            W4 = tfv1.get_variable('W4', shape=(self.hidden_units, self.out_units), initializer=tf.random_normal_initializer())
+            W4 = tfv1.get_variable('W4', shape=(self.hidden_units, self.hidden_units), initializer=tf.random_normal_initializer())
             W5 = tfv1.get_variable('W5', shape=(self.hidden_units, self.out_units), initializer=tf.random_normal_initializer())
             
             b1 = tfv1.get_variable('b1', shape=(self.hidden_units), initializer=tf.zeros_initializer())
