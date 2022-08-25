@@ -37,7 +37,6 @@ class CustomEnv(gym.Env):
         for values in  r:
             if 'A' in values:
                 j = values.index('A')
-                print(f'i: {i} and j: {j}')
                 break
             else:
                 i += 1

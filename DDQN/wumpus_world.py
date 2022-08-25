@@ -160,6 +160,8 @@ class WumpusBoard:
                 '''AGENTE ESTA NA CASA EM QUE HA OURO, WUMPUS OU POÇO'''
                 matrix_env[piece.pos] = 'A'
             else:
+                if piece.code == 'W' and not self.components['Agent'].wumpus_alive:
+                    piece.code = 'X'
                 matrix_env[piece.pos] = piece.code
         
         return matrix_env
@@ -297,14 +299,14 @@ class WumpusWorld:
     def invalid_move(self):
         direction = self.board.components['Agent'].direction
         row, col = self.board.components['Agent'].pos
-        if direction == 'N':
-            row += 1
-        elif direction == 'S':
-            row -= 1
-        elif direction == 'E':
-            col += 1
-        elif direction == 'W':
-            col -= 1
+        # if direction == 'N':
+        #     row += 1
+        # elif direction == 'S':
+        #     row -= 1
+        # elif direction == 'E':
+        #     col += 1
+        # elif direction == 'W':
+        #     col -= 1
 
         return (row, col)
     
@@ -351,7 +353,7 @@ class WumpusWorld:
     def observe(self):
         current_row, current_col = self.board.components['Agent'].pos
         amount_arrow = self.board.components['Agent'].amount_arrows if self.board.components['Agent'].amount_arrows == 1 else 0
-        wumpus_alive = self.board.components['Agent'].wumpus_alive
+        wumpus_alive = 1 if self.board.components['Agent'].wumpus_alive else 0
         dict_directions = {'N':0, 'S':1, 'E':2, 'W':3}
         direction = self.board.components['Agent'].direction
         state_env = [current_row * self.board.size_env + current_col, dict_directions[direction]]
@@ -438,11 +440,32 @@ if __name__ == '__main__':
     env.board.components['Pit2'].pos = (0,2)
     env.board.components['Gold'].pos = (2,1)
     env.board.components['Wumpus'].pos = (0,3)
+    env.board.components['Agent'].pos = (1,3)
+    
     mat = env.board.get_matrix_env()
     mat_sen = env.board.get_matrix_sensations()
     print(env.board.get_board_str(mat))
+    print(env.evaluate())
     print(env.observe())
     print(env.distance_euclidean())
+    env.move('TURN_RIGHT')
+    env.move('SHOOT')
+    print(env.evaluate())
+    print(env.observe())
+    mat = env.board.get_matrix_env()
+    print(env.board.get_board_str(mat))
+    env.move('FORWARD')
+    print(env.board.components['Agent'].pos)
+    print(env.evaluate())
+    print(env.observe())
+    mat = env.board.get_matrix_env()
+    print(env.board.get_board_str(mat))
+    env.board.components['Agent'].pos = (1,3)
+    env.move('SHOOT')
+    print(env.evaluate())
+    print(env.observe())
+    mat = env.board.get_matrix_env()
+    print(env.board.get_board_str(mat))
     
 
 

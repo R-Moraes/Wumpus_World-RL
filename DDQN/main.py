@@ -47,12 +47,18 @@ class Agent():
         # start training
         record_rewards = []
         amount_grab_gold = 0
+        amount_dead_wumpus = 0
+        has_gold_safe_home = 0
+        steps_environment = []
         for i in range(max_episodes):
             print(f'Episode {i}')
+            amount_steps_environment = 0
             if i%100==0:
-                env.render()
+                self.env.render()
             total_rewards = 0
             state = self.env.reset()
+            if i%100==0:
+                self.env.render()
             state = state.reshape(1, self.states)
             for j in range(max_actions):
                 #self.env.render() # Uncomment this line to render the environment
@@ -60,9 +66,14 @@ class Agent():
                 next_state, reward, done, info = self.env.step(dict_actions[action])
                 next_state = next_state.reshape(1, self.states)
                 total_rewards += reward
+                amount_steps_environment += 1
                 
                 if done:
-                    amount_grab_gold = amount_grab_gold + 1 if env.environment.board.components['Agent'].has_gold else amount_grab_gold
+                    amount_grab_gold = amount_grab_gold + 1 if self.env.environment.board.components['Agent'].has_gold else amount_grab_gold
+                    amount_dead_wumpus = amount_dead_wumpus + 1 if not self.env.environment.board.components['Agent'].wumpus_alive else amount_dead_wumpus
+                    if state[0][0] == 0 and self.env.environment.board.components['Agent'].has_gold:
+                        has_gold_safe_home += 1
+                    steps_environment.append(amount_steps_environment)
                     self.exp.add(state, action, reward, next_state, done)
                     self.qnet.batch_train(batch_size)
                     break
@@ -84,6 +95,15 @@ class Agent():
                 print("episodes: %i to %i, average_reward: %.3f, exploration: %.3f" %(i-100, i, average_rewards, exploration_rate))
                 print(f'Amount_has_gold: {amount_grab_gold}')
                 amount_grab_gold = 0
+                print(f'Amount_dead_wumpus: {amount_dead_wumpus}')
+                amount_dead_wumpus = 0
+                print(f'Has_Gold_And_Safe_Home: {has_gold_safe_home}')
+                has_gold_safe_home = 0
+                print(f'State last episode: {state}\nPosition of Agent in the last episode: {state[0][0]}')
+                row, col = self.env.environment.board.components['Agent'].pos
+                print('Position(Matrix) of Agent in the last episode: (%i,%i)' %(row,col))
+                avg_steps = np.mean(np.array(steps_environment))
+                print(f'Average steps in the environment: {avg_steps}')
 
 
 if __name__ == '__main__':
