@@ -8,8 +8,8 @@ import time
 import numpy as np
 
 class CustomEnv(gym.Env):
-    def __init__(self, nrow, ncol):
-        self.environment = WumpusWorld(nrow)
+    def __init__(self, nrow, ncol, max_steps):
+        self.environment = WumpusWorld(nrow, max_steps)
         self.action_space = spaces.Discrete(5)  # 5 actions: FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT
         # 8 observations: POSITION_AGENT, DIRECTION, BREEZE, STENCH, GLITTER, ARROW, WUMPUS IS ALIVE, DISTANCE_TO_GOLD
         self.observation_space = spaces.Discrete(7)
@@ -46,18 +46,38 @@ class CustomEnv(gym.Env):
             print(outfile.getvalue())
 
 
-if __name__ == '__main__':
-    env = CustomEnv(4,4)
-    env.environment.board.components['Pit0'].pos = (3,1)
-    env.environment.board.components['Pit1'].pos = (1,2)
-    env.environment.board.components['Pit2'].pos = (0,2)
-    env.environment.board.components['Gold'].pos = (2,1)
-    env.environment.board.components['Wumpus'].pos = (0,3)
-    env.render()
-    env.environment.board.components['Agent'].pos = (1,1)
-    env.step('TURN_LEFT')
-    print(env.environment.board.components['Agent'].direction)
-    env.step('FORWARD')
-    env.render()
-    env.step('FORWARD')
-    env.render()
+# if __name__ == '__main__':
+#     env = CustomEnv(4,4, 100)
+#     env.environment.board.components['Pit0'].pos = (3,1)
+#     env.environment.board.components['Pit1'].pos = (1,2)
+#     env.environment.board.components['Pit2'].pos = (0,2)
+#     env.environment.board.components['Gold'].pos = (2,1)
+#     env.environment.board.components['Wumpus'].pos = (0,3)
+#     env.render()
+#     env.environment.board.components['Agent'].pos = (1,1)
+#     env.render()
+#     ns, r, d, i = env.step('TURN_LEFT')
+#     print(env.environment.board.components['Agent'].direction)
+#     print(env.environment.get_pos_agent())
+#     print(ns,r,d,i)
+#     ns, r, d, i = env.step('FORWARD')
+#     env.render()
+#     print(env.environment.board.components['Agent'].direction)
+#     print(env.environment.get_pos_agent())
+#     print(ns,r,d,i)
+#     ns, r, d, i = env.step('GRAB')
+#     env.render()
+#     print(env.environment.board.components['Agent'].direction)
+#     print(env.environment.get_pos_agent())
+#     print(ns,r,d,i)
+#     env.environment.board.components['Agent'].pos = (0,1)
+#     ns, r, d, i = env.step('TURN_LEFT')
+#     env.render()
+#     print(env.environment.board.components['Agent'].direction)
+#     print(env.environment.get_pos_agent())
+#     print(ns,r,d,i)
+#     ns, r, d, i = env.step('FORWARD')
+#     env.render()
+#     print(env.environment.board.components['Agent'].direction)
+#     print(env.environment.get_pos_agent())
+#     print(ns,r,d,i)

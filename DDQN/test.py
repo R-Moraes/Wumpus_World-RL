@@ -1,22 +1,14 @@
+from os import path
 import numpy as np
 
-MAPS = {
-    "4x4": ["SFFF", "FHFH", "FFFH", "HFFG"],
-    "8x8": [
-        "SFFFFFFF",
-        "FFFFFFFF",
-        "FFFHFFFF",
-        "FFFFFHFF",
-        "FFFHFFFF",
-        "FHHFFFHF",
-        "FHFFHFHF",
-        "FFFHFFFG",
-    ],
-}
 
-map_name="4x4"
-desc = MAPS[map_name]
-print(desc)
-desc2 = desc = np.asarray(desc, dtype="c")
-desc = desc2.tolist()
-desc = [[c.decode("utf-8") for c in line] for line in desc]
+def read_executions():
+    directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\execution_01.npy')
+
+    with open(directory, 'rb') as file:
+        all_rewards = np.load(file)
+
+    return all_rewards
+
+x = [r for r in read_executions() if r < -500]
+print(x)

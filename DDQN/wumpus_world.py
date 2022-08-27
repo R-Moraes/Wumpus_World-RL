@@ -63,10 +63,11 @@ class PieceAgent(BoardPiece):
         return row, col
 
 class WumpusBoard:
-    def __init__(self, size_env):
+    def __init__(self, size_env, max_steps):
         self.size_env = size_env
         self.components = {}
         self.sensations = {'breeze':set(), 'stench':set(), 'glitter':set()}
+        self.max_steps = max_steps
     
     def rand_Pair(self):
         row = np.random.randint(0, self.size_env)
@@ -76,7 +77,7 @@ class WumpusBoard:
     
     def add_Piece(self, name, code, pos, direction=None):
         if code == 'A':
-            new_piece = PieceAgent(name, code, pos, 100, direction)
+            new_piece = PieceAgent(name, code, pos, self.max_steps, direction)
         else:
             new_piece = BoardPiece(name, code, pos)
         self.components[name] = new_piece
@@ -154,7 +155,7 @@ class WumpusBoard:
         matrix_env = np.zeros((self.size_env, self.size_env), dtype='<U2')
         matrix_env[:] = 'E'
         agent_pos = self.components['Agent'].pos
-
+        
         for name, piece in self.components.items():
             if agent_pos == piece.pos:
                 '''AGENTE ESTA NA CASA EM QUE HA OURO, WUMPUS OU POÇO'''
@@ -179,8 +180,8 @@ class WumpusBoard:
 
 
 class WumpusWorld:
-    def __init__(self, size) -> None:
-        self.board = WumpusBoard(size)
+    def __init__(self, size, max_steps) -> None:
+        self.board = WumpusBoard(size, max_steps)
         self.board.add_Piece('Agent', 'A', (0,0), 'E')
         self.generation_environment()
     
@@ -351,7 +352,7 @@ class WumpusWorld:
         return state_sensations
     
     def observe(self):
-        current_row, current_col = self.board.components['Agent'].pos
+        current_row, current_col = self.get_pos_agent()
         amount_arrow = self.board.components['Agent'].amount_arrows if self.board.components['Agent'].amount_arrows == 1 else 0
         wumpus_alive = 1 if self.board.components['Agent'].wumpus_alive else 0
         dict_directions = {'N':0, 'S':1, 'E':2, 'W':3}
@@ -389,9 +390,9 @@ class WumpusWorld:
                     self.board.components['Wumpus'].code == 'E'
                     return 100
                 else:
-                    return -10
+                    return -1
             else:
-                return -10
+                return -1
         elif last_action == 'FORWARD':
             x,y = self.invalid_move()
             if not self.board.coord_is_valid((x,y)):
@@ -433,39 +434,45 @@ class WumpusWorld:
         return (row, col)     
 
 
-if __name__ == '__main__':
-    env = WumpusWorld(4)
-    env.board.components['Pit0'].pos = (3,1)
-    env.board.components['Pit1'].pos = (1,2)
-    env.board.components['Pit2'].pos = (0,2)
-    env.board.components['Gold'].pos = (2,1)
-    env.board.components['Wumpus'].pos = (0,3)
-    env.board.components['Agent'].pos = (1,3)
+# if __name__ == '__main__':
+#     env = WumpusWorld(4, 100)
+#     env.board.components['Pit0'].pos = (3,1)
+#     env.board.components['Pit1'].pos = (1,2)
+#     env.board.components['Pit2'].pos = (0,2)
+#     env.board.components['Gold'].pos = (2,1)
+#     env.board.components['Wumpus'].pos = (0,3)
+#     env.board.components['Agent'].pos = (1,3)
     
-    mat = env.board.get_matrix_env()
-    mat_sen = env.board.get_matrix_sensations()
-    print(env.board.get_board_str(mat))
-    print(env.evaluate())
-    print(env.observe())
-    print(env.distance_euclidean())
-    env.move('TURN_RIGHT')
-    env.move('SHOOT')
-    print(env.evaluate())
-    print(env.observe())
-    mat = env.board.get_matrix_env()
-    print(env.board.get_board_str(mat))
-    env.move('FORWARD')
-    print(env.board.components['Agent'].pos)
-    print(env.evaluate())
-    print(env.observe())
-    mat = env.board.get_matrix_env()
-    print(env.board.get_board_str(mat))
-    env.board.components['Agent'].pos = (1,3)
-    env.move('SHOOT')
-    print(env.evaluate())
-    print(env.observe())
-    mat = env.board.get_matrix_env()
-    print(env.board.get_board_str(mat))
+#     mat = env.board.get_matrix_env()
+#     mat_sen = env.board.get_matrix_sensations()
+#     print(env.board.get_board_str(mat))
+#     print(env.evaluate())
+#     print(env.observe())
+#     print(env.distance_euclidean())
+#     env.move('TURN_RIGHT')
+#     env.move('SHOOT')
+#     print(env.evaluate())
+#     print(env.observe())
+#     mat = env.board.get_matrix_env()
+#     print(env.board.get_board_str(mat))
+#     env.move('FORWARD')
+#     print(env.board.components['Agent'].pos)
+#     print(env.evaluate())
+#     print(env.observe())
+#     mat = env.board.get_matrix_env()
+#     print(env.board.get_board_str(mat))
+#     env.board.components['Agent'].pos = (1,3)
+#     env.move('SHOOT')
+#     print(env.evaluate())
+#     print(env.observe())
+#     mat = env.board.get_matrix_env()
+#     print(env.board.get_board_str(mat))
+#     for i in range(env.board.size_env):
+#         for j in range(env.board.size_env):
+#             env.board.components['Agent'].pos = (i,j)
+#             current_row, current_col = env.board.components['Agent'].pos
+#             state = current_row * env.board.size_env + current_col
+#             print(f'pos: ({current_row},{current_col}) and state: {state}')
     
 
 
