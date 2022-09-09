@@ -1,13 +1,13 @@
 import tensorflow as tf
 from tensorflow.compat import v1 as tfv1
-from TNET import TNET
+# from TNET import TNET
 import numpy as np
 
 
 class QNET():
     def __init__(self, in_units, out_units, exp, hidden_units=256):
         # Target Network
-        self.tnet = TNET(in_units, out_units)
+        # self.tnet = TNET(in_units, out_units)
 
         # experience replay
         self.exp = exp
@@ -20,7 +20,7 @@ class QNET():
         self.session = None
         self._model()
         self._batch_learning_model()
-        self._tnet_update()
+        # self._tnet_update()
         
     def _model(self):
         """ Q-network architecture """
@@ -44,10 +44,6 @@ class QNET():
             h4 = tf.nn.tanh(tf.matmul(h3, W4) + b4)
             self.q = tf.matmul(h4, W5)
             
-    def _tnet_update(self):
-        """ Update Target network by using the parameters of Q-Network"""
-        with tfv1.variable_scope('qnet'):                        
-            self.update_opt = [t.assign(q) for t, q in zip(self.tnet.parms, self.params)]
             
     def update(self):
         """Execution for Target network update"""
@@ -91,14 +87,11 @@ class QNET():
         # get actions by Q-network
         qnet_q_values = self.session.run(self.q, feed_dict={self.x:next_state})
         qnet_actions = np.argmax(qnet_q_values, axis=1)
-        
-        # calculate estimated Q-values with qnet_actions by using Target-network
-        tnet_q_values = self.session.run(self.tnet.q, feed_dict={self.tnet.x:next_state})
-        #take pega os valores da lista tnet_q_values nas posicoes qnet_actions
-        tnet_q = [np.take(tnet_q_values[i], qnet_actions[i]) for i in range(batch_size)]
+        #take pega os valores da lista qnet_q_values nas posicoes qnet_actions
+        qnet_q = [np.take(qnet_q_values[i], qnet_actions[i]) for i in range(batch_size)]
         
         # Update Q-values of Q-network
-        qnet_update_q = [r+0.95*q if not d else r for r, q, d in zip(reward, tnet_q, done)]
+        qnet_update_q = [r+0.95*q if not d else r for r, q, d in zip(reward, qnet_q, done)]
         
         # optimization
         indices=[[i,action[i]] for i in range(batch_size)]

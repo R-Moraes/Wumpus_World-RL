@@ -1,51 +1,48 @@
-import gym 
-from experience_replay import ExpReplay
-from QNET import QNET
-from TNET import TNET
+from random import random
 import numpy as np
-import tensorflow.compat.v1 as tf
-from custom_env import CustomEnv
 import time
 from os import path
 from matplotlib import pyplot as plt
 
 dict_actions = {0:'FORWARD', 1:'TURN_LEFT', 2:'TURN_RIGHT', 3: 'GRAB', 4:'SHOOT'}
 
-class Agent():
-    def __init__(self, env):
-        # set hyper parameters
-        self.max_episodes = 10000
-        #self.max_actions = 10000
-        self.exploration_rate = 1.0
-        self.exploration_decay = 0.0001  
-        
-        # set environment
+class QAgent():
+    def __init__(self, env, max_episodes):
+        # set hyperparameters
+        self.max_episodes = max_episodes   #set max training episodes
+        self.max_actions = env.environment.board.max_steps       # set max actions per episodes
+        self.learning_rate = 0.83   # for q-learning
+        self.discount = 0.93        # for q-learning
+        self.exploration_rate = 1.0 # for exploration
+        self.exploration_decay = 0.0001 # for exploration
+
+        # get environment
         self.env = env
-        self.states = env.observation_space.n
-        self.actions = env.action_space.n
-        self.max_actions = self.env.environment.board.max_steps
-        
-        # Experience Replay for batch learning
-        self.exp = ExpReplay()
-        # the number of experience per batch for batch learning
-        self.batch_size = 64 
-        
-        # Deep Q Network
-        self.qnet = QNET(self.states, self.actions, self.exp)
-        # For execute Deep Q Network
-        session = tf.InteractiveSession()
-        session.run(tf.global_variables_initializer())
-        #self.qnet.set_session(session)
-        self.qnet.session = session
-        
+
+        # Initialize Q(s, a)
+        row = env.observation_space.n
+        col = env.action_space.n
+        self.Q = np.zeros((row, col))
+    
+    def _police(self, mode, state, e_rate=0):
+        if mode == 'train':
+            if random() > e_rate:
+                return np.argmax(self.Q[state, :])     # exploitation
+            else:
+                return self.env.action_space.sample()   # exploration
+        elif mode == 'test':
+            return np.argmax(self.Q[state, :])  # optimal policy
+    
     def train(self):
-        # set hyper parameters
+        # get hyper-parameters
         max_episodes = self.max_episodes
         max_actions = self.max_actions
+        learning_rate = self.learning_rate
+        discount = self.discount
         exploration_rate = self.exploration_rate
         exploration_decay = self.exploration_decay
-        batch_size = self.batch_size
-        
+
+        total_rewards = 0
         # start training
         record_rewards = []
         list_rewards = []
@@ -54,53 +51,38 @@ class Agent():
         has_gold_safe_home = 0
         steps_environment = []
         self.env.render()
+        time.sleep(5)
         for i in range(max_episodes):
             print(f'Episode {i}')
             amount_steps_environment = 0
             total_rewards = 0
             state = self.env.reset()
-            
-            if i%100==0:
-                self.env.render()
-
-            state = state.reshape((1, self.states))
-
-            for j in range(max_actions):
-                #self.env.render() # Uncomment this line to render the environment
-                action = self.qnet.get_action(state, exploration_rate)
+            for a in range(max_actions):
+                action = self._police('train', state, exploration_rate)
                 next_state, reward, done, info = self.env.step(dict_actions[action])
-                next_state = next_state.reshape((1, self.states))
+
+                # The formulation of updating Q(s, a)
+                self.Q[state, action] = self.Q[state, action] + \
+                    learning_rate * (reward + discount*np.max(self.Q[next_state, :]) - self.Q[state, action])
+                state = next_state
                 total_rewards += reward
                 amount_steps_environment += 1
-                
+
                 if done:
-                    '''
-                    We use next_state as the current state because when done = True 
-                    the episode is closed and the state is not updated with next_state.
-                    '''
                     amount_grab_gold = amount_grab_gold + 1 if self.env.environment.board.components['Agent'].has_gold else amount_grab_gold
                     amount_dead_wumpus = amount_dead_wumpus + 1 if not self.env.environment.board.components['Agent'].wumpus_alive else amount_dead_wumpus
-                    if next_state[0][0] == 0 and self.env.environment.board.components['Agent'].has_gold:
+                    if next_state == 0 and self.env.environment.board.components['Agent'].has_gold:
                         has_gold_safe_home += 1
                     steps_environment.append(amount_steps_environment)
-                    self.exp.add(state, action, reward, next_state, done)
-                    self.qnet.batch_train(batch_size)
-                    
                     break
-                    
-                self.exp.add(state, action, reward, next_state, done)
-                self.qnet.batch_train(batch_size)
-                
-                # update target network
-                if (j%25)== 0 and j>0:
-                    self.qnet.update()
-                
-                # next episode
-                state = next_state
             print(f'reward of episode {i}: {total_rewards}')        
             record_rewards.append(total_rewards)
             list_rewards.append(total_rewards)
-            exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
+            
+            if exploration_rate > 0.001:
+                # exploration_rate -= exploration_decay
+                exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
+            
             if i%100==0 and i>0:
                 self.env.render()
                 average_rewards = np.mean(np.array(record_rewards))
@@ -112,7 +94,7 @@ class Agent():
                 amount_dead_wumpus = 0
                 print(f'Has_Gold_And_Safe_Home: {has_gold_safe_home}')
                 has_gold_safe_home = 0
-                print(f'State last episode: {next_state}\nPosition of Agent in the last episode: {next_state[0][0]}')
+                print(f'State last episode: {next_state}\nPosition of Agent in the last episode: {next_state}')
                 row, col = self.env.environment.get_pos_agent()
                 print('Position(Matrix) of Agent in the last episode: (%i,%i)' %(row,col))
                 avg_steps = np.mean(np.array(steps_environment))
@@ -120,17 +102,33 @@ class Agent():
                 print(f'Steps in last episode: {amount_steps_environment}')
                 last_action = self.env.environment.board.components['Agent'].last_action
                 print(f'last action: {last_action}')
-        
+                time.sleep(5)
         self.write_executions(list_rewards)
-
+    
+    def test(self):
+        # Setting hyper-parameters
+        max_actions = self.max_actions
+        state = self.env.reset() # reset the environment
+        for a in range(max_actions):
+            self.env.render() # show the environment states
+            action = np.argmax(self.Q[state,:]) # take action with the Optimal Policy
+            next_state, reward, done, info = self.env.step(action) # arrive to next_state after taking the action
+            state = next_state # update current state
+            if done:
+                print("======")
+                self.env.render()
+                break
+            print("======")
+        self.env.close()
+    
     def write_executions(self, rewards):
         list_rewards = np.array(rewards)
-        directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions')
+        directory = path.join(path.abspath('.'), 'gym_game\Q_Learning\executions')
         with open(path.abspath(path.join(directory,'execution_01.npy')), 'ab+') as file:
             np.save(file, list_rewards)
 
     def read_executions(self):
-        directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\execution_01.npy')
+        directory = path.join(path.abspath('.'), 'gym_game\Q_Learning\executions\execution_01.npy')
 
         with open(directory, 'rb') as file:
             all_rewards = np.load(file)
@@ -150,15 +148,6 @@ class Agent():
         # fig.savefig('ddqn.png')
         plt.show()
 
-def reset_data():
-    directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\execution_01.npy')
-    open(directory,"wb").close()
-
-if __name__ == '__main__':
-    reset_data()
-    tf.disable_eager_execution()
-    max_steps = 200
-    env = CustomEnv(nrow=8, ncol=8, max_steps=max_steps)
-    agent = Agent(env)
-    agent.train()
-    agent.graph()
+    def reset_data(self):
+        directory = path.join(path.abspath('.'), 'gym_game\Q_Learning\executions\execution_01.npy')
+        open(directory,"wb").close()
