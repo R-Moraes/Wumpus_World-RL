@@ -1,4 +1,5 @@
 import numpy as np
+VALUE_SEED = 0
 
 class BoardPiece:
     def __init__(self, name, code, pos, direction='E') -> None:
@@ -68,6 +69,14 @@ class WumpusBoard:
         self.components = {}
         self.sensations = {'breeze':set(), 'stench':set(), 'glitter':set()}
         self.max_steps = max_steps
+        self.array_seed = self.generate_array_seed()
+    
+    def generate_array_seed(self):
+        np.random.seed(VALUE_SEED)
+        value = (self.size_env-1) + 2
+        array_seed = np.random.randint(low=1, high=100, size=value)
+
+        return array_seed
     
     def rand_Pair(self):
         row = np.random.randint(0, self.size_env)
@@ -202,12 +211,15 @@ class WumpusWorld:
             return True
     
     def init_grid_rand(self):
+        idx = 0
         pieces = [ (f'Pit{i}', 'P') for i in range(0, self.board.size_env-1)] + [('Gold', 'G'), ('Wumpus', 'W')]
         for name, cod in pieces:
+            np.random.seed(self.board.array_seed[idx])
             pos = self.board.rand_Pair()
             while not self.position_is_valid(pos):
                 pos = self.board.rand_Pair()
             self.board.add_Piece(name, cod, pos)
+            idx += 1
     
     def environment_is_valid(self):
         return self.depthSearch((0,0))
