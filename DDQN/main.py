@@ -1,3 +1,7 @@
+import sys
+from os import path
+sys.path.append(path.join(path.abspath('.'), 'gym_game','env'))
+
 import gym 
 from experience_replay import ExpReplay
 from QNET import QNET
@@ -5,9 +9,10 @@ from TNET import TNET
 import numpy as np
 import tensorflow.compat.v1 as tf
 from custom_env import CustomEnv
-import time
-from os import path
+import csv
 from matplotlib import pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 dict_actions = {0:'FORWARD', 1:'TURN_LEFT', 2:'TURN_RIGHT', 3: 'GRAB', 4:'SHOOT'}
 
@@ -39,6 +44,10 @@ class Agent():
         self.qnet.session = session
         
     def train(self):
+        #RECORD INFO EPISODES
+        list_info_train = []
+        info_train = {'rewards': None,'episode': None, 'step_per_episode': None,
+                    'has_gold': None, 'killed_wumpus': None, 'get_gold_and_return_home': None}
         # set hyper parameters
         max_episodes = self.max_episodes
         max_actions = self.max_actions
@@ -47,22 +56,22 @@ class Agent():
         batch_size = self.batch_size
         
         # start training
-        record_rewards = []
-        list_rewards = []
-        amount_grab_gold = 0
-        amount_dead_wumpus = 0
+        grab_gold = 0
         has_gold_safe_home = 0
-        steps_environment = []
+        killed_wumpus = 0
+
         self.env.render()
         for i in range(max_episodes):
             print(f'Episode {i}')
             amount_steps_environment = 0
             total_rewards = 0
-            state = self.env.reset()
+            grab_gold = 0
+            killed_wumpus = 0
+            has_gold_safe_home = 0
+            info_train = {'rewards': None,'episode': None, 'step_per_episode': None,
+                    'has_gold': None, 'killed_wumpus': None, 'get_gold_and_return_home': None}
             
-            if i%100==0:
-                self.env.render()
-
+            state = self.env.reset()
             state = state.reshape((1, self.states))
 
             for j in range(max_actions):
@@ -70,6 +79,7 @@ class Agent():
                 action = self.qnet.get_action(state, exploration_rate)
                 next_state, reward, done, info = self.env.step(dict_actions[action])
                 next_state = next_state.reshape((1, self.states))
+                
                 total_rewards += reward
                 amount_steps_environment += 1
                 
@@ -78,13 +88,21 @@ class Agent():
                     We use next_state as the current state because when done = True 
                     the episode is closed and the state is not updated with next_state.
                     '''
-                    amount_grab_gold = amount_grab_gold + 1 if self.env.environment.board.components['Agent'].has_gold else amount_grab_gold
-                    amount_dead_wumpus = amount_dead_wumpus + 1 if not self.env.environment.board.components['Agent'].wumpus_alive else amount_dead_wumpus
-                    if next_state[0][0] == 0 and self.env.environment.board.components['Agent'].has_gold:
-                        has_gold_safe_home += 1
-                    steps_environment.append(amount_steps_environment)
                     self.exp.add(state, action, reward, next_state, done)
                     self.qnet.batch_train(batch_size)
+
+                    #record information of the episode
+                    grab_gold = 1 if self.env.environment.board.components['Agent'].has_gold else 0
+                    killed_wumpus = 1 if not self.env.environment.board.components['Agent'].wumpus_alive else 0
+                    if next_state[0][0] == 0 and self.env.environment.board.components['Agent'].has_gold:
+                        has_gold_safe_home = 1
+                    info_train['episode'] = i
+                    info_train['rewards'] = total_rewards
+                    info_train['has_gold'] = grab_gold
+                    info_train['step_per_episode'] = amount_steps_environment
+                    info_train['killed_wumpus'] = killed_wumpus
+                    info_train['get_gold_and_return_home'] = has_gold_safe_home
+                    list_info_train.append(info_train)
                     
                     break
                     
@@ -97,68 +115,53 @@ class Agent():
                 
                 # next episode
                 state = next_state
-            print(f'reward of episode {i}: {total_rewards}')        
-            record_rewards.append(total_rewards)
-            list_rewards.append(total_rewards)
-            exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
-            if i%100==0 and i>0:
-                self.env.render()
-                average_rewards = np.mean(np.array(record_rewards))
-                record_rewards = []
-                print("episodes: %i to %i, average_reward: %.3f, exploration: %.3f" %(i-100, i, average_rewards, exploration_rate))
-                print(f'Amount_has_gold: {amount_grab_gold}')
-                amount_grab_gold = 0
-                print(f'Amount_dead_wumpus: {amount_dead_wumpus}')
-                amount_dead_wumpus = 0
-                print(f'Has_Gold_And_Safe_Home: {has_gold_safe_home}')
-                has_gold_safe_home = 0
-                print(f'State last episode: {next_state}\nPosition of Agent in the last episode: {next_state[0][0]}')
-                row, col = self.env.environment.get_pos_agent()
-                print('Position(Matrix) of Agent in the last episode: (%i,%i)' %(row,col))
-                avg_steps = np.mean(np.array(steps_environment))
-                print(f'Average steps in the environment: {avg_steps}')
-                print(f'Steps in last episode: {amount_steps_environment}')
-                last_action = self.env.environment.board.components['Agent'].last_action
-                print(f'last action: {last_action}')
-        
-        self.write_executions(list_rewards)
+            print(f'Reward of episode {i}: {total_rewards}\nEpsilon: {exploration_rate}')      
 
-    def write_executions(self, rewards):
-        list_rewards = np.array(rewards)
+            #Update exploration rate
+            exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
+        
+        self.write_executions(list_info_train)
+
+    def write_executions(self, infos_train: list):
+        headers = ['episode', 'rewards', 'has_gold', 'step_per_episode', 'killed_wumpus', 'get_gold_and_return_home']
+
         directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions')
-        with open(path.abspath(path.join(directory,'execution_01.npy')), 'ab+') as file:
-            np.save(file, list_rewards)
+        with open(path.abspath(path.join(directory, file_name)), 'w') as file:
+            writer = csv.DictWriter(file, fieldnames=headers)
+            writer.writeheader()
+            writer.writerows(infos_train)
 
     def read_executions(self):
-        directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\execution_01.npy')
+        directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\\', file_name)
+        data = pd.read_csv(directory)
 
-        with open(directory, 'rb') as file:
-            all_rewards = np.load(file)
-
-        return all_rewards
+        return data
 
     def graph(self):
-        all_rewards = self.read_executions()
-        x = np.arange(self.max_episodes)
+        data = self.read_executions()
 
-        fig, ax = plt.subplots()
-        ax.plot(x, all_rewards)
+        #moving average
+        window = 10
+        data['moving_average'] = data.rewards.rolling(window).mean()
 
-        ax.set(xlabel='Episodes', ylabel='Rewards', title='DDQN')
-        ax.grid()
-
-        # fig.savefig('ddqn.png')
+        sns.lineplot(x = 'episode', y='rewards', data=data, label='Reward per episodes')
+        sns.lineplot(x='episode', y='moving_average', data=data, label='Move Average Rewards')
+        plt.xlabel('Episodes')
+        plt.ylabel('Rewards')
+        plt.grid()
+        plt.savefig('graph_rewards_dqn.png')
         plt.show()
 
 def reset_data():
-    directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\execution_01.npy')
+    directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\\', file_name)
     open(directory,"wb").close()
 
 if __name__ == '__main__':
-    reset_data()
     tf.disable_eager_execution()
-    max_steps = 200
-    env = CustomEnv(nrow=8, ncol=8, max_steps=max_steps)
+    file_name = 'ddqn_execution_01.csv'
+    reset_data()
+    max_steps = 100
+    env = CustomEnv(nrow=4, ncol=4, max_steps=max_steps)
     agent = Agent(env)
     agent.train()
     agent.graph()

@@ -1,5 +1,5 @@
 import numpy as np
-VALUE_SEED = 0
+VALUE_SEED = 123
 
 class BoardPiece:
     def __init__(self, name, code, pos, direction='E') -> None:
