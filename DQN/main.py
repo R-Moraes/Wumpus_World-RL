@@ -1,5 +1,6 @@
 import sys
 from os import path
+sys.path.append(path.join(path.abspath('.'), 'gym_game'))
 sys.path.append(path.join(path.abspath('.'), 'gym_game','env'))
 
 import tensorflow as tf
@@ -8,6 +9,7 @@ import numpy as np
 from experience_replay import ExpReplay
 from custom_env import CustomEnv
 from QNET import QNET
+from epsilon_methods import exponential_decay_method, decrement_epsilon
 import csv
 from matplotlib import pyplot as plt
 import pandas as pd
@@ -18,10 +20,11 @@ dict_actions = {0:'FORWARD', 1:'TURN_LEFT', 2:'TURN_RIGHT', 3: 'GRAB', 4:'SHOOT'
 class DeepQAgent:
     def __init__(self, env, hidden_units=256):
         # set hyper parameters
-        self.max_episodes = 10000
-        #self.max_actions = 10000
+        self.max_episodes = 200
+        #self.max_actions = 1000
         self.exploration_rate = 1.0
-        self.exploration_decay = 0.0001  
+        self.exploration_decay = 0.995
+        self.epsilon_min = 0.1  
         
         # set environment
         self.env = env
@@ -110,7 +113,9 @@ class DeepQAgent:
             print(f'Reward of episode {i}: {total_rewards}\nEpsilon: {exploration_rate}')
 
             #Update exploration rate
-            exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
+            # exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
+            # exploration_rate = decrement_epsilon(exploration_rate, self.epsilon_min, self.exploration_decay)
+            exploration_rate = exponential_decay_method(i, max_episodes, self.epsilon_min)
 
         self.write_executions(list_info_train)    
     
@@ -133,7 +138,7 @@ class DeepQAgent:
         data = self.read_executions()
 
         #moving average
-        window = 10
+        window = 100
         data['moving_average'] = data.rewards.rolling(window).mean()
     
         sns.lineplot(x = 'episode', y='rewards', data=data, label='Reward per episodes')
@@ -143,6 +148,19 @@ class DeepQAgent:
         plt.grid()
         plt.savefig('graph_rewards_dqn.png')
         plt.show()
+    
+    def save_model(self):
+        saver = tfv1.train.Saver()
+        name_model = 'model_dqn'
+        directory = path.join(path.abspath('.'), 'gym_game\DQN\models\\', name_model)
+        saver.save(self.qnet.session, directory)
+    
+    def load_model(self):
+        self.qnet.session = tfv1.Session()
+        name_model = 'model_dqn.meta'
+        directory = path.join(path.abspath('.'), 'gym_game\DQN\models\\', name_model)
+        saver = tfv1.train.import_meta_graph(directory)
+        saver.restore(self.qnet.session, tfv1.train.latest_checkpoint('.\\'))
 
 def reset_data():
     directory = path.join(path.abspath('.'), 'gym_game\DQN\executions\\', file_name)
@@ -150,9 +168,10 @@ def reset_data():
 
 if __name__ == '__main__':
     tfv1.disable_eager_execution()
-    file_name = 'dqn_execution_01.csv'
+    dim = 4
+    file_name = f'dqn_execution_{dim}x{dim}.csv'
     reset_data()
-    env = CustomEnv(nrow=4,ncol=4, max_steps=100)
+    env = CustomEnv(nrow=dim,ncol=dim, max_steps=100)
     agent = DeepQAgent(env)
     agent.train()
     agent.graph()

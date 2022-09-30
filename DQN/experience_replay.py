@@ -1,7 +1,7 @@
 import numpy as np
 
 class ExpReplay():
-    def __init__(self, e_max=15000, e_min=100):
+    def __init__(self, e_max=50000, e_min=100):
         self._max = e_max   # max number of experiences in the memory
         self._min = e_min   # min number of experiences for training
         self.exp = {'state': [], 'action': [], 'reward': [], 'next_state': [], 'done': []} # total experiences the Agent stored

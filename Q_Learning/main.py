@@ -1,8 +1,13 @@
+import sys
+from os import path
+sys.path.append(path.join(path.abspath('.'), 'gym_game'))
+sys.path.append(path.join(path.abspath('.'), 'gym_game','env'))
+
 from random import random
 import numpy as np
 import time
-from os import path
 from custom_env import CustomEnv
+from epsilon_methods import exponential_decay_method, decrement_epsilon
 import csv
 from matplotlib import pyplot as plt
 import pandas as pd
@@ -19,6 +24,7 @@ class QAgent():
         self.discount = 0.93        # for q-learning
         self.exploration_rate = 1.0 # for exploration
         self.exploration_decay = 0.0001 # for exploration
+        self.epsilon_min = 0.1
 
         # get environment
         self.env = env
@@ -98,9 +104,10 @@ class QAgent():
                     break
             print(f'Reward of episode {i}: {total_rewards}\nEpsilon: {exploration_rate}')
             
-            if exploration_rate > 0.001:
-                # exploration_rate -= exploration_decay
-                exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
+            # if exploration_rate > 0.001:
+            #     # exploration_rate -= exploration_decay
+            #     exploration_rate = 0.01 + (exploration_rate-0.01)*np.exp(-exploration_decay*(i+1))
+            exploration_rate = exponential_decay_method(i, max_episodes, self.epsilon_min)
             
         self.write_executions(list_info_train) 
     
@@ -147,18 +154,19 @@ class QAgent():
         plt.xlabel('Episodes')
         plt.ylabel('Rewards')
         plt.grid()
-        plt.savefig('graph_rewards_dqn.png')
-        plt.show()
+        plt.savefig(f'graph_rewards_ql_{self.env.environment.size_env}x{self.env.environment.size_env}.png')
+        # plt.show()
 
 def reset_data():
     directory = path.join(path.abspath('.'), 'gym_game\Q_Learning\executions\\', file_name)
     open(directory,"wb").close()
 
 if __name__ == '__main__':
-    file_name = 'ql_execution_01.csv'
+    dim = 4
+    file_name = f'dqn_execution_{dim}x{dim}.csv'
     reset_data()
-    max_episodes = 1000
-    env = CustomEnv(nrow=4,ncol=4, max_steps=100)
+    max_episodes = 20000
+    env = CustomEnv(nrow=dim,ncol=dim, max_steps=100)
     agent = QAgent(env, max_episodes=max_episodes)
     agent.train()
     agent.graph()
