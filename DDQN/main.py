@@ -12,6 +12,7 @@ import tensorflow.compat.v1 as tf
 from custom_env import CustomEnv
 from epsilon_methods import exponential_decay_method, decrement_epsilon
 import csv
+import datetime
 from matplotlib import pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -136,7 +137,9 @@ class Agent():
             writer.writerows(infos_train)
 
     def read_executions(self):
-        directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\\', file_name)
+        date = '15-10-2022'
+        file_name_date_exec = f'ddqn_execution_{dim}x{dim}-{date}.csv'
+        directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\\', file_name_date_exec)
         data = pd.read_csv(directory)
 
         return data
@@ -162,11 +165,13 @@ def reset_data():
 
 if __name__ == '__main__':
     tf.disable_eager_execution()
-    dim = 4
-    file_name = f'dqn_execution_{dim}x{dim}.csv'
+    dict_max_steps = {4: 100, 8: 150, 10: 200} #size environment is key and value is amount max steps
+    dict_values_seed = {4: 123, 8: 99, 10: 917} #size environment is key and value is values seed
+    dim = 10
+    date_execution = datetime.datetime.now().strftime('%Y-%m-%d')
+    file_name = f'ddqn_execution_{dim}x{dim}-{date_execution}.csv'
     reset_data()
-    max_steps = 100
-    env = CustomEnv(nrow=dim, ncol=dim, max_steps=max_steps)
+    env = CustomEnv(nrow=dim, ncol=dim, max_steps=dict_max_steps[dim], value_seed=dict_values_seed[dim])
     agent = Agent(env)
     agent.train()
-    agent.graph()
+    # agent.graph()
