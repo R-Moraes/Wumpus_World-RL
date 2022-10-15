@@ -8,8 +8,8 @@ import time
 import numpy as np
 
 class CustomEnv(gym.Env):
-    def __init__(self, nrow, ncol, max_steps):
-        self.environment = WumpusWorld(nrow, max_steps)
+    def __init__(self, nrow, ncol, max_steps, value_seed):
+        self.environment = WumpusWorld(nrow, max_steps, value_seed)
         self.action_space = spaces.Discrete(5)  # 5 actions: FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT
         # 8 observations: POSITION_AGENT, DIRECTION, BREEZE, STENCH, GLITTER, ARROW, WUMPUS IS ALIVE, DISTANCE_TO_GOLD
         # 4x4 = 16 states -> nrow x ncol = n_states

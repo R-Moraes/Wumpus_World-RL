@@ -154,7 +154,7 @@ class QAgent():
         plt.xlabel('Episodes')
         plt.ylabel('Rewards')
         plt.grid()
-        plt.savefig(f'graph_rewards_ql_{self.env.environment.size_env}x{self.env.environment.size_env}.png')
+        plt.savefig(f'graph_rewards_ql_{self.env.environment.board.size_env}x{self.env.environment.board.size_env}.png')
         # plt.show()
 
 def reset_data():
@@ -162,11 +162,13 @@ def reset_data():
     open(directory,"wb").close()
 
 if __name__ == '__main__':
-    dim = 4
+    dict_max_steps = {4: 100, 8: 150, 10: 200} #size environment is key and value is amount max steps
+    dict_values_seed = {4: 123, 8: 99, 10: 917} #size environment is key and value is values seed
+    dim = 8
     file_name = f'dqn_execution_{dim}x{dim}.csv'
     reset_data()
     max_episodes = 20000
-    env = CustomEnv(nrow=dim,ncol=dim, max_steps=100)
+    env = CustomEnv(nrow=dim,ncol=dim, max_steps=dict_max_steps[dim], value_seed=dict_values_seed[dim])
     agent = QAgent(env, max_episodes=max_episodes)
     agent.train()
-    agent.graph()
+    # agent.graph()

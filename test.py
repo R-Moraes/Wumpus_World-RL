@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import seaborn as sns
 from os import path
+import numpy as np
 
 def read_executions():
         directory = path.join(path.abspath('.'), file_name)
@@ -30,4 +31,5 @@ def graph():
         plt.show()
 
 file_name = 'dqn_execution_01.csv'
-graph()
+valores = np.random.randint(0,1000,10) # -457 -506 -917
+print(valores)

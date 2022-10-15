@@ -20,7 +20,7 @@ dict_actions = {0:'FORWARD', 1:'TURN_LEFT', 2:'TURN_RIGHT', 3: 'GRAB', 4:'SHOOT'
 class DeepQAgent:
     def __init__(self, env, hidden_units=256):
         # set hyper parameters
-        self.max_episodes = 200
+        self.max_episodes = 20000
         #self.max_actions = 1000
         self.exploration_rate = 1.0
         self.exploration_decay = 0.995
@@ -146,8 +146,8 @@ class DeepQAgent:
         plt.xlabel('Episodes')
         plt.ylabel('Rewards')
         plt.grid()
-        plt.savefig('graph_rewards_dqn.png')
-        plt.show()
+        plt.savefig(f'graph_rewards_dqn_{dim}x{dim}.png')
+        # plt.show()
     
     def save_model(self):
         saver = tfv1.train.Saver()
@@ -168,10 +168,12 @@ def reset_data():
 
 if __name__ == '__main__':
     tfv1.disable_eager_execution()
-    dim = 4
+    dict_max_steps = {4: 100, 8: 150, 10: 200} #size environment is key and value is amount max steps
+    dict_values_seed = {4: 123, 8: 99, 10: 917} #size environment is key and value is values seed
+    dim = 10
     file_name = f'dqn_execution_{dim}x{dim}.csv'
     reset_data()
-    env = CustomEnv(nrow=dim,ncol=dim, max_steps=100)
+    env = CustomEnv(nrow=dim,ncol=dim, max_steps=dict_max_steps[dim], value_seed=dict_values_seed[dim])
     agent = DeepQAgent(env)
     agent.train()
     agent.graph()

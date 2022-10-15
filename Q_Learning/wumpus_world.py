@@ -1,5 +1,5 @@
 import numpy as np
-VALUE_SEED = 123
+# VALUE_SEED = 99 # 123 -- 4x4, 99 -- 8x8,  917 -- 10x10
 
 class BoardPiece:
     def __init__(self, name, code, pos, direction='E') -> None:
@@ -64,15 +64,16 @@ class PieceAgent(BoardPiece):
         return row, col
 
 class WumpusBoard:
-    def __init__(self, size_env, max_steps):
+    def __init__(self, size_env, max_steps, value_seed):
         self.size_env = size_env
         self.components = {}
         self.sensations = {'breeze':set(), 'stench':set(), 'glitter':set()}
         self.max_steps = max_steps
+        self.value_seed = value_seed
         self.array_seed = self.generate_array_seed()
     
     def generate_array_seed(self):
-        np.random.seed(VALUE_SEED)
+        np.random.seed(self.value_seed)
         value = (self.size_env-1) + 2
         array_seed = np.random.randint(low=1, high=100, size=value)
 
@@ -189,8 +190,8 @@ class WumpusBoard:
 
 
 class WumpusWorld:
-    def __init__(self, size, max_steps) -> None:
-        self.board = WumpusBoard(size, max_steps)
+    def __init__(self, size, max_steps, value_seed) -> None:
+        self.board = WumpusBoard(size, max_steps, value_seed)
         self.board.add_Piece('Agent', 'A', (0,0), 'E')
         self.generation_environment()
     

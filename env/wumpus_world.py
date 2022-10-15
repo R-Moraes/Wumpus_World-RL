@@ -1,5 +1,5 @@
 import numpy as np
-VALUE_SEED = 123
+# VALUE_SEED = 917  # 123 -- 4x4, 99 -- 8x8,  917 -- 10x10
 
 class BoardPiece:
     def __init__(self, name, code, pos, direction='E') -> None:
@@ -64,15 +64,16 @@ class PieceAgent(BoardPiece):
         return row, col
 
 class WumpusBoard:
-    def __init__(self, size_env, max_steps):
+    def __init__(self, size_env, max_steps, value_seed):
         self.size_env = size_env
         self.components = {}
         self.sensations = {'breeze':set(), 'stench':set(), 'glitter':set()}
         self.max_steps = max_steps
+        self.value_seed = value_seed
         self.array_seed = self.generate_array_seed()
     
     def generate_array_seed(self):
-        np.random.seed(VALUE_SEED)
+        np.random.seed(self.value_seed)
         value = (self.size_env-1) + 2
         array_seed = np.random.randint(low=1, high=100, size=value)
 
@@ -189,8 +190,8 @@ class WumpusBoard:
 
 
 class WumpusWorld:
-    def __init__(self, size, max_steps) -> None:
-        self.board = WumpusBoard(size, max_steps)
+    def __init__(self, size, max_steps, value_seed) -> None:
+        self.board = WumpusBoard(size, max_steps, value_seed)
         self.board.add_Piece('Agent', 'A', (0,0), 'E')
         self.generation_environment()
     
@@ -448,43 +449,6 @@ class WumpusWorld:
 
 # if __name__ == '__main__':
 #     env = WumpusWorld(4, 100)
-#     env.board.components['Pit0'].pos = (3,1)
-#     env.board.components['Pit1'].pos = (1,2)
-#     env.board.components['Pit2'].pos = (0,2)
-#     env.board.components['Gold'].pos = (2,1)
-#     env.board.components['Wumpus'].pos = (0,3)
-#     env.board.components['Agent'].pos = (1,3)
-    
-#     mat = env.board.get_matrix_env()
-#     mat_sen = env.board.get_matrix_sensations()
-#     print(env.board.get_board_str(mat))
-#     print(env.evaluate())
-#     print(env.observe())
-#     print(env.distance_euclidean())
-#     env.move('TURN_RIGHT')
-#     env.move('SHOOT')
-#     print(env.evaluate())
-#     print(env.observe())
-#     mat = env.board.get_matrix_env()
-#     print(env.board.get_board_str(mat))
-#     env.move('FORWARD')
-#     print(env.board.components['Agent'].pos)
-#     print(env.evaluate())
-#     print(env.observe())
-#     mat = env.board.get_matrix_env()
-#     print(env.board.get_board_str(mat))
-#     env.board.components['Agent'].pos = (1,3)
-#     env.move('SHOOT')
-#     print(env.evaluate())
-#     print(env.observe())
-#     mat = env.board.get_matrix_env()
-#     print(env.board.get_board_str(mat))
-#     for i in range(env.board.size_env):
-#         for j in range(env.board.size_env):
-#             env.board.components['Agent'].pos = (i,j)
-#             current_row, current_col = env.board.components['Agent'].pos
-#             state = current_row * env.board.size_env + current_col
-#             print(f'pos: ({current_row},{current_col}) and state: {state}')
     
 
 
