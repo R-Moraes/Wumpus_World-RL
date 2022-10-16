@@ -22,7 +22,7 @@ dict_actions = {0:'FORWARD', 1:'TURN_LEFT', 2:'TURN_RIGHT', 3: 'GRAB', 4:'SHOOT'
 class Agent():
     def __init__(self, env):
         # set hyper parameters
-        self.max_episodes = 10000
+        self.max_episodes = 20000
         #self.max_actions = 10000
         self.exploration_rate = 1.0
         self.exploration_decay = 0.995  
@@ -137,7 +137,7 @@ class Agent():
             writer.writerows(infos_train)
 
     def read_executions(self):
-        date = '15-10-2022'
+        date = '2022-10-15'
         file_name_date_exec = f'ddqn_execution_{dim}x{dim}-{date}.csv'
         directory = path.join(path.abspath('.'), 'gym_game\DDQN\executions\\', file_name_date_exec)
         data = pd.read_csv(directory)
@@ -156,7 +156,7 @@ class Agent():
         plt.xlabel('Episodes')
         plt.ylabel('Rewards')
         plt.grid()
-        plt.savefig('graph_rewards_dqn.png')
+        plt.savefig('graph_rewards_ddqn.png')
         plt.show()
 
 def reset_data():
@@ -170,8 +170,8 @@ if __name__ == '__main__':
     dim = 10
     date_execution = datetime.datetime.now().strftime('%Y-%m-%d')
     file_name = f'ddqn_execution_{dim}x{dim}-{date_execution}.csv'
-    reset_data()
+    # reset_data()
     env = CustomEnv(nrow=dim, ncol=dim, max_steps=dict_max_steps[dim], value_seed=dict_values_seed[dim])
     agent = Agent(env)
-    agent.train()
-    # agent.graph()
+    # agent.train()
+    agent.graph()

@@ -130,7 +130,7 @@ class DeepQAgent:
             writer.writerows(infos_train)
 
     def read_executions(self):
-        date = '15-10-2022'
+        date = '2022-10-15'
         file_name_date_exec = f'dqn_execution_{dim}x{dim}-{date}.csv'
         directory = path.join(path.abspath('.'), 'gym_game\DQN\executions\\', file_name_date_exec)
         data = pd.read_csv(directory)
