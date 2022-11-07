@@ -170,9 +170,9 @@ if __name__ == '__main__':
     dim = 4
     date_execution = datetime.datetime.now().strftime('%Y-%m-%d')
     file_name = f'ql_execution_{dim}x{dim}-{date_execution}.csv'
-    reset_data()
+    # reset_data()
     max_episodes = 20000
     env = CustomEnv(nrow=dim,ncol=dim, max_steps=dict_max_steps[dim], value_seed=dict_values_seed[dim])
     agent = QAgent(env, max_episodes=max_episodes)
-    agent.train()
+    # agent.train()
     # agent.graph()

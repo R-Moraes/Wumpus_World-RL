@@ -173,7 +173,7 @@ if __name__ == '__main__':
     tfv1.disable_eager_execution()
     dict_max_steps = {4: 100, 8: 150, 10: 200} #size environment is key and value is amount max steps
     dict_values_seed = {4: 123, 8: 99, 10: 917} #size environment is key and value is values seed
-    dim = 10
+    dim = 4
     date_execution = datetime.datetime.now().strftime('%Y-%m-%d')
     file_name = f'dqn_execution_{dim}x{dim}-{date_execution}.csv'
     reset_data()
