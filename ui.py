@@ -9,15 +9,15 @@ BLACK = (0, 0, 0)
 WHITE = (200, 200, 200)
 
 class Gui_environment:
-    def __init__(self):
+    def __init__(self, size_env):
         self.window_height = 650
         self.window_width = 650
         self.screen = pygame.display.set_mode((self.window_width, self.window_height))
         self.width_cave = self.window_width - 100
         self.height_cave = self.window_height - 100
         self.pix_init = 50
-        self.block_size = int(self.width_cave/4)
-        self.size_env = 4
+        self.size_env = size_env
+        self.block_size = int(self.width_cave/self.size_env)
         self.img_wumpus = None
         self.img_gold = None
         self.img_pit = None
@@ -118,15 +118,14 @@ class Gui_environment:
 if __name__ == '__main__':
     dict_max_steps = {4: 100, 8: 150, 10: 200} #size environment is key and value is amount max steps
     dict_values_seed = {4: 123, 8: 99, 10: 917} #size environment is key and value is values seed
-    dim = 4
+    dim = 10
     
     env = CustomEnv(nrow=dim,ncol=dim, max_steps=dict_max_steps[dim], value_seed=dict_values_seed[dim])
-    gui = Gui_environment()
-    gui.size_env = dim
+    gui = Gui_environment(size_env=dim)
 
     gui.add_agent(env.environment.board.components['Agent'].pos)
     gui.add_wumpus(env.environment.board.components['Wumpus'].pos)
-    coord_pits = [env.environment.board.components[f'Pit{i}'].pos for i in range(3)]
+    coord_pits = [env.environment.board.components[f'Pit{i}'].pos for i in range(gui.size_env-1)]
     gui.add_pits(coord_pits)
     gui.add_gold(env.environment.board.components['Gold'].pos)
     # gui.add_agent(env.environment.board.components['Agent'].pos)
