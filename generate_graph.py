@@ -28,22 +28,35 @@ def graph():
         dqn_data['moving_average'] = dqn_data.rewards.rolling(window).mean()
         ql_data['moving_average'] = ql_data.rewards.rolling(window).mean()
 
-        print(ddqn_data.rewards.max(), dqn_data.rewards.max(), ql_data.rewards.max())
+        steps_data_ql = ql_data.loc[(ql_data['has_gold'] == 1)]
+        steps_data_dqn = dqn_data.loc[(dqn_data['has_gold'] == 1)]
+        steps_data_ddqn = ddqn_data.loc[(ddqn_data['has_gold'] == 1)]
+        # num_win_ql = (ql_data.groupby('killed_wumpus').size()/(20000))*100
+        # num_win_dqn = (dqn_data.groupby('killed_wumpus').size()/(20000))*100
+        # num_win_ddqn = (ddqn_data.groupby('killed_wumpus').size()/(20000))*100
+        # print(f'QL: {num_win_ql}')
+        # print(f'DQN: {num_win_dqn}')
+        # print(f'DDQN: {num_win_ddqn}')
+        # print(ql_data[ql_data['has_gold'] == 1].rewards.min(), dqn_data[dqn_data['has_gold']==1].rewards.min(), ddqn_data[ddqn_data['has_gold']==1].rewards.min())
+        # print(ql_data[ql_data['has_gold'] == 1].rewards.max(), dqn_data[dqn_data['has_gold']==1].rewards.max(), ddqn_data[ddqn_data['has_gold']==1].rewards.max())
+        # print(round(ql_data[ql_data['has_gold'] == 1].rewards.std(), 4), round(dqn_data[dqn_data['has_gold']==1].rewards.std(), 4), round(ddqn_data[ddqn_data['has_gold']==1].rewards.std(), 4))
+        # print(round(ql_data[ql_data['has_gold'] == 1].rewards.mean(), 4), round(dqn_data[dqn_data['has_gold']==1].rewards.mean(), 4), round(ddqn_data[ddqn_data['has_gold']==1].rewards.mean(), 4))
 
-        # sns.lineplot(x = 'episode', y='rewards', data=ddqn_data, label='Reward per episodes')
-        sns.lineplot(x='episode', y='moving_average', data=ddqn_data, label='Move Average Rewards DDQN')
-        sns.lineplot(x='episode', y='moving_average', data=dqn_data, label='Move Average Rewards DQN')
-        sns.lineplot(x='episode', y='moving_average', data=ql_data, label='Move Average Rewards Q_Learning')
+        # sns.lineplot(x = 'episode', y='step_per_episode', data=ddqn_data, label='Reward per episodes')
+        sns.lineplot(x='episode', y='moving_average', data=ddqn_data, label='Moving Average Rewards DDQN')
+        sns.lineplot(x='episode', y='moving_average', data=dqn_data, label='Moving Average Rewards DQN')
+        sns.lineplot(x='episode', y='moving_average', data=ql_data, label='Moving Average Rewards QL')
         plt.xlabel('Episodes')
         plt.ylabel('Rewards')
         plt.grid()
-        # plt.savefig(f'graph_rewards_ql_{dim}x{dim}.png')
+        plt.savefig(f'graph_rewards_ql_{dim}x{dim}.png')
+        # plt.savefig(f'graph_step_per_episode_{dim}x{dim}.png')
         plt.show()
 
 if __name__ == '__main__':
     dict_max_steps = {4: 100, 8: 150, 10: 200} #size environment is key and value is amount max steps
     dict_values_seed = {4: 123, 8: 99, 10: 917} #size environment is key and value is values seed
-    dim = 10
+    dim = 15
     date = '2022-10-15'
     file_name = f'_execution_{dim}x{dim}-{date}.csv'
     graph()

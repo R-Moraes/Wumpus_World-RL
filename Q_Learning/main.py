@@ -165,14 +165,14 @@ def reset_data():
     open(directory,"wb").close()
 
 if __name__ == '__main__':
-    dict_max_steps = {4: 100, 8: 150, 10: 200} #size environment is key and value is amount max steps
-    dict_values_seed = {4: 123, 8: 99, 10: 917} #size environment is key and value is values seed
-    dim = 4
+    dict_max_steps = {4: 100, 8: 150, 10: 200, 15: 250} #size environment is key and value is amount max steps
+    dict_values_seed = {4: 123, 8: 99, 10: 917, 15: 77} #size environment is key and value is values seed
+    dim = 15
     date_execution = datetime.datetime.now().strftime('%Y-%m-%d')
     file_name = f'ql_execution_{dim}x{dim}-{date_execution}.csv'
-    # reset_data()
+    reset_data()
     max_episodes = 20000
     env = CustomEnv(nrow=dim,ncol=dim, max_steps=dict_max_steps[dim], value_seed=dict_values_seed[dim])
     agent = QAgent(env, max_episodes=max_episodes)
-    # agent.train()
+    agent.train()
     # agent.graph()
