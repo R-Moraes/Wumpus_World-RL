@@ -4,3 +4,4 @@
  *.pyc
  models/**
  DQN/models/**
+ DQN/models/model_dqn*
